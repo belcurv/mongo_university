@@ -111,3 +111,173 @@ And then calling two methods:
 `c.next()`  // returns the next document
 
 ---------------------
+
+#### Week 2: CRUD
+
+**Creating Documents**
+
+As we saw before, we can use db.collection.insertOne() to insert a single document.
+
+We can use our own `_id` values:
+
+```
+db.moviesScratch.insertOne({ "title": "Rocky", "year": "1976", "_id": "tt0075148"});
+```
+
+To create multiple documents, we can `insertMany()` which takes an array of documents.
+
+```
+db.moviesScratch.insertMany(
+  [
+    {
+      "title": "Rocky",
+      "year": "1976",
+      "_id": "tt0075148"
+    },
+    {
+      "title": "Rocky II",
+      "year": "1977",
+      "_id": "tt0072341"
+    },
+    {
+      "title": "Rocky III",
+      "year": "1978",
+      "_id": "tt0079874"
+    }
+  ]
+)
+```
+
+What if there are errors during `insertMany()`? We can do either *ordered* inserts or *unordered* inserts. By default, `insertMany()` does an ordered insert, meaning as soon as it encounters an error it stops.
+
+If we want our app to keep going after encountering an error, we pass the option `ordered: false`
+
+```
+db.moviesScratch.insertMany(
+  [
+    {
+      "title": "Rocky",
+      "year": "1976",
+      "_id": "tt0075148"
+    },
+    {
+      "title": "Rocky II",
+      "year": "1977",
+      "_id": "tt0072341"
+    },
+    {
+      "title": "Rocky III",
+      "year": "1978",
+      "_id": "tt0079874"
+    }
+  ],
+  {
+    'ordered': false
+  }
+)
+```
+
+We can also create documents using update commands, we call them **upserts**.
+
+#### About the `_id` field
+
+All collections have a unique primary index on the `_id` field. This enables mongodb to retrieve documents based on the `_id` field very efficiently. By defeult, MongoDB creates `_id` values with value type ObjectId, a 12-byte hex string consisting of:
+
+```
+DATE | MAC ADDR | PID | COUNTER
+____      ___      __     ___
+```
+
+#### Reading Documents
+
+Equality searches involving scalar values, then nested documents and array fields.
+
+Simple query:
+
+```
+db.movieDetails.find({ rated: "PG-13"}).pretty()
+```
+
+Selectors in the query document for `find` are implicitly "and-ed" together. Meaning BOTH selectors must match.
+
+```
+db.movieDetails.find({ rated: "PG-13", year: 2009}).pretty()
+```
+
+Matching nested fields/documents. Use 'dot.notation' between quotes:
+
+```
+db.movieDetails.find({ 'tomato.meter': 100})
+```
+
+Matches for array fields. We can consider:
+
+1.  Exact matches on the entire array. Order matters in the array.
+
+    ```
+    db.movieDetails.find({ "writers" : ["Ethan Coen", "Joel Coen"] })
+    ```
+
+2.  Based on any single element. The syntax is the same for selectors for scalar values: you don't need to enclose your query in array brackets. Doing so matches the exact, entire array as above. Finding a single value in an array, for example:
+
+    ```
+    db.movieDetails.find({ "actors" : "Jeff Bridges" })
+    ```
+
+3.  based on a specific element position in an array. For example, find documents where Jeff Bridges is the star (aka, listed in the 1st position in the array). Use 'dot.notation' in quotes:
+
+    ```
+    db.movieDetails.find({ "actors.0": "Jeff Bridges" })
+    ```
+
+4.  more complex matches using operators. _Discussed in later lessons_
+
+Cursors and Projection.
+
+The `find` method returns a cursor. In mongo shell, if we don't assign the return value from `find` to a variable, the cursor is automatically iterated up to 20 times to print an initial set of query results. Mongodb returns query results in batches. Batch size will not exceed the max BSON doc size, and most queries return 101 documents of just enough docs to exceed 1MB. Subsequent batches will be 4MB.
+
+`cursor.next` will retrieve the next batch of docs.
+
+To see how many docs remain in a batch, you can do:
+
+```
+// assign cursor to a variable
+var c = db.movieDetails.find();
+
+// create a function to see if there are any more results,
+// and if there are, getting them
+var doc = function() { return c.hasNext() ? c.next() : null; }
+
+// how many objects are left in batch?
+c.objsLeftInBatch()
+
+// then we can iterate through the docs one at a time using the `doc`
+// method we just wrote:
+doc()
+doc()
+doc()
+```
+
+Projections limit the fields returned in results docs. We can explicitly include & exclude fields. `_id` is always returned by default, so if you don't want to see it you have to explicitly exclude it.
+
+#### Comparison Operators
+
+`$eq` - equal
+
+`$ne` - not equal
+
+`$gt` - greater than
+
+`$gte` - greater than or equal
+
+`$lt` - less than
+
+`$lte` - less than or equal
+
+`$in` - find any one of a number of values. Ex:
+
+    ```
+    db.movieDetails.find({ rated: { $in: ["G", "PG", "PG-13"]}})
+    ```
+
+`$nin` - not in
