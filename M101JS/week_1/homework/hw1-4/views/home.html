@@ -1,0 +1,44 @@
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            margin: 0;
+            padding: 1em;
+            box-sizing: border-box;
+            color: #333;
+        }
+        a {
+            color: #333;
+            text-decoration: none;
+            padding: .3em;
+        }
+        a:hover {
+            color: aquamarine;
+            background: #333;
+        }
+        ul {
+            list-style: none;
+        }
+        li {
+            padding: .4em;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/">Home</a> | <a href="/movies">Movies</a>
+    </header>
+    <hr>
+    <h1>Add Movies</h1>
+    <form action="/movies" method="POST" id="add-movie-form">
+        <input name="title" type="text" placeholder="Title" required>
+        <input name="year" type="text" placeholder="Year" required>
+        <input name="imdb" type="text" placeholder="Imdb" required>
+        <button type="submit">Sumbit</button>
+    </form>
+
+</body>
+
+</html>

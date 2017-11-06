@@ -1,0 +1,47 @@
+<html>
+   <head>
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            margin: 0;
+            padding: 1em;
+            box-sizing: border-box;
+            color: #333;
+        }
+        a {
+            color: #333;
+            text-decoration: none;
+            padding: .3em;
+        }
+        a:hover {
+            color: aquamarine;
+            background: #333;
+        }
+        ul {
+            list-style: none;
+        }
+        li {
+            padding: .4em;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/">Home</a> | <a href="/movies">Movies</a>
+    </header>
+    <hr>
+    <h1>Movies</h1>
+    <ul>
+        {% for movie in movies %}
+        <li>
+            <a target="_blank" href="http://www.imdb.com/title/{{ movie.imdb }}">
+                {{ movie.title }}, {{ movie.year }}
+            </a>
+        </li>
+        {% else %}
+        <li>No movies found.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
