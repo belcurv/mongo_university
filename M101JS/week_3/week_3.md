@@ -170,6 +170,10 @@ Say we want to query for documents based on embedded documents inside a record's
 
 When constucting queries in javascript using the NodeJS driver, we can use regular methods to create and assign values to javascript objects (object literals, dot notation, and [array] bracket notation).
 
+#### Dot Notation on Embedded Documents in Arrays
+
+Documents embedded as elements in an array field. For example, `offices` in the `crunchbase` dataset is an array.
+
 You can use dot.notation to identify fields within embedded documents. You can **also** use dot.notation to identify fields within documents that are embedded within arrays.
 
 For example, in a crunchbase document, `offices` is and array. We can query against it thus:
@@ -182,15 +186,170 @@ if ('country' in options) {
 
 That (`offices.country_code`) works because Mongo treats documents with arrays of nested documents as if there were multiple separate copies of the document for each nested array, with the array value as a regular (non array element) document field.
 
-#### Dot Notation on Embedded Documents in Arrays
-
-
-
 #### Sort, Skip, and Limit in the Node.js Driver
 
+When retieving docs, we often want to be able to page through results. Not 'batching', but like a number of pages of results. Databases in general are designed to support that kind of paging mechanism.  Page 2 of the results might mean a 2nd query where we `skip` the first say 10 results.
+
+Because the concepts of `skip`ing `limit`ing and `sort`ing are most important when building mongodb applications, we'll discuss them in conjunction with the NodeJS driver.
+
+**sort** - refer to `app-sort.js`
+
+To sort, specify the field name and either 1 (ascending order) or -1 (descending order).
+
+```
+cursor.sort({ founded_year: -1 });
+```
+
+Again, not until we run the `forEach` method does the query actually execute. Rather, we create the `find` and chain `project` and now `sort` on to the query. The `forEach` fires the fully prepared query off to the db server.
+
+How about _sorted by year, then sorted by number of empoyees_? We pass an array to `sort` because the order is important and **arrays preserve order** (objects do not guarantee order).
+
+```
+cursor.sort([
+  ['founded_year', 1],
+  ['number_of_employees', -1]
+]);
+```
+
+`skip` and `limit` are also `cursor` methods, and as with `sort` the merely modify the description of the operation we want to execute against the database. Again, the query is not executed until the `forEach` fires.
+
+We almost NEVER want to apply `skip` before `sort` !!  But, by design MongoDB will **always** sort first, skip second, and limit last. Regardless of how foolishly we arrange the methods.
 
 #### insertOne() and insertMany() in the Node.js Driver
 
+Writing data to MongoDB using the NodeJS driver.
 
+Lecture Notes:
+
+[Twitter Developer Documentation](https://dev.twitter.com/overview/documentation)
+
+[Documentation on the Twitter streaming API](https://dev.twitter.com/streaming/overview)
+
+[Documentation on the Twitter REST API](https://dev.twitter.com/rest/public)
+
+To use any of the Twitter APIs you will need access tokens. The simplest means of [acquiring access tokens is described here](https://dev.twitter.com/oauth/overview/application-owner-access-tokens)
+
+The Twitter API client library for Node.js that I used in the lessons is found [here](https://www.npmjs.com/package/twitter)
+
+Note that you can place your access tokens in a separate file (.env) and use the following package to load them.
+
+https://www.npmjs.com/package/dotenv
+
+The `package.json` file for this lesson contains the dependencies for the `twitter` and `dotenv` packages. See the applications in the handouts for examples of how to use. The documentation for the `twitter` and `nodenv` packages provides details on setting up your tokens as environment variables, loading them, and using them to access the twitter API.
+
+Inserting a document with `insertOne`. It takes a document( MongoDB will readily accept JSON) and a callback. 
+
+```
+db.collection('statuses').insertOne(document, function(err, res) {
+  // etc
+});
+```
+
+`insertMany` takes an array. It is otherwise the same: takes array od documents as 1st paramter and a callback as the 2nd.
+
+```
+db.collection('statuses').insertMany(docsArray, function(err, res) {
+  // etc
+});
+```
 
 #### deleteOne() and deleteMany() in the Node.js Driver
+
+`deleteOne` takes a query document and will delete the first record it finds. In the course example, we loop over an array and call `deleteOne` for each set of duplicate documents. This is pretty inefficient since each `deleteOne` call needs a full round-trip to the database.
+
+When you have a large task, really want to use `deleteMany`.
+
+#### Homework 3.1
+
+>When using find() in the Node.js driver, which of the following best describes **when** the driver will send a query to MongoDB?
+
+A: When we call a `cursor` method passing a callback as an argument.
+
+#### Homework 3.2
+
+Suppose you have a MongoDB collection called `school.grades` that is composed solely of these 20 documents:
+
+```
+{"_id": 17, "student": "David",     "grade": 5,  "assignment": "exam"}
+{"_id": 18, "student": "Steve",     "grade": 9,  "assignment": "homework"}
+{"_id": 4,  "student": "Wendy",     "grade": 12, "assignment": "homework"}
+{"_id": 3,  "student": "Fiona",     "grade": 16, "assignment": "quiz"}
+{"_id": 16, "student": "Sacha",     "grade": 23, "assignment": "quiz"}
+{"_id": 15, "student": "Kim",       "grade": 28, "assignment": "quiz"}
+{"_id": 14, "student": "Seamus",    "grade": 33, "assignment": "exam"}
+{"_id": 13, "student": "Bob",       "grade": 37, "assignment": "exam"}
+{"_id": 1,  "student": "Mary",      "grade": 45, "assignment": "homework"}
+{"_id": 2,  "student": "Alice",     "grade": 48, "assignment": "homework"}
+{"_id": 11, "student": "Ted",       "grade": 52, "assignment": "exam"}
+{"_id": 12, "student": "Bill",      "grade": 59, "assignment": "exam"}
+{"_id": 9,  "student": "Sam",       "grade": 61, "assignment": "homework"}
+{"_id": 10, "student": "Tom",       "grade": 67, "assignment": "exam"}
+{"_id": 8,  "student": "Stacy",     "grade": 73, "assignment": "quiz"}
+{"_id": 7,  "student": "Katherine", "grade": 77, "assignment": "quiz"}
+{"_id": 5,  "student": "Samantha",  "grade": 82, "assignment": "homework"}
+{"_id": 6,  "student": "Fay",       "grade": 89, "assignment": "quiz"}
+{"_id": 19, "student": "Burt",      "grade": 90, "assignment": "quiz"}
+{"_id": 20, "student": "Stan",      "grade": 92, "assignment": "exam"}
+```
+
+Assuming the variable `db` holds a connection to the `school` database in the following code snippet.
+
+var cursor = db.collection("grades").find({});
+cursor.skip(6);
+cursor.limit(2);
+cursor.sort({"grade": 1});
+
+Which student's documents will be returned as part of a subsequent call to toArray()?
+
+#### Homework 3.3
+
+Download Handouts:
+
+    buildingQueryDocuments_569ef31dd8ca393add3abeba.zip
+
+This application depends on the `companies.json` dataset distributed as a handout with the `findAndCursorsInNodeJSDriver` lesson. You must first import that collection. Please ensure you are working with an unmodified version of the collection before beginning this exercise.
+
+To import a fresh version of the `companies.json` data, please type the following:
+
+```
+mongoimport --drop -d crunchbase -c companies companies.json
+```
+
+If you have already mongoimported this data you will first need to drop the `crunchbase` database in the Mongo shell. Do that by typing the following two commands, one at a time, in the Mongo shell:
+
+```
+use crunchbase
+db.dropDatabase()
+```
+
+The code in the attached handout is complete with the exception of the `queryDocument()` function. As in the lessons, the `queryDocument()` function builds an object that will be passed to `find()` to match a set of documents from the `crunchbase.companies` collection.
+
+For this assignment, please complete the `queryDocument()` function as described in the TODO comments you will find in that function.
+
+Once complete, run this application by typing:
+
+```
+node buildingQueryDocuments.js
+```
+
+When you are convinced you have completed the application correctly, please enter the average number of employees per company reported in the output. Enter only the number reported. It should be three numeric digits.
+
+As a check that you have completed the exercise correctly, the total number of unique companies reported by the application should equal 42.
+
+A: see code in /homework folder...
+
+#### Homework 3.4
+
+The code attached is complete with the exception of the `queryDocument()` function. As in the lessons, the `queryDocument()` function builds an object that will be passed to `find()` to match a set of documents from the `crunchbase.companies` collection.
+
+For this assignment, please complete the `queryDocument()` function as described in the TODO comments you will find in that function.
+
+Once complete, run this application by typing:
+
+```
+node overviewOrTags.js
+```
+
+When you are convinced you have completed the application correctly, please enter the average number of employees per company reported in the output. Enter only the number reported. It should be two numeric digits.
+
+As a check that you have completed the exercise correctly, the total number of unique companies reported by the application should equal 194.
