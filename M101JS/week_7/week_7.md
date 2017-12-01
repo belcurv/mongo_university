@@ -14,7 +14,7 @@ Topics:
 
 How do we make sure writes persist? The DB is mostly writing to memory; in WiredTiger, for example, there's a cache of pages that are periodically written and read from disk depending on memory "pressure".
 
-There's a 2nd structure called a "journal", a log of every single write the DB processes. The journal is in memory too. So, when does the journal get written back to disk? Becuase that's when the data is really considered to be persistent.
+There's a 2nd structure called a "journal", a log of every single write the DB processes. The journal is in memory too. So, when does the journal get written back to disk? Because that's when the data is really considered to be persistent.
 
 When our Mongo driver sends an `insert` or `update` to the server, the server will process the update and write it into the memory pages. It simultaneously writes the update into the journal. By default in the MongoDB driver, when you do an `update` the client/driver waits for a response ("acknowledged update" or "acknowledged insert") but we don't wait for the journal to be written to disk. The journal might not be written to disk for a while.
 
@@ -82,17 +82,65 @@ MongoDB does not offer eventual consistency in its default configuration. But en
 Normally you would install a separate `mongod` on each of a bunch of separate physical servers and using the default port number. For this lecture, he is creating a replica set on a single machine so he needs to set different port numbers for each of the three nodes.
 
 ```
+mkdir -p /data/rs1 /data/rs2 /data/rs3
 mongod --replSet rs1 --logpath "1.log" --dbpath /data/rs1 --port 27017 --fork
 mongod --replSet rs1 --logpath "2.log" --dbpath /data/rs2 --port 27018 --fork
 mongod --replSet rs1 --logpath "3.log" --dbpath /data/rs3 --port 27019 --fork
 ```
 
-In the aobve, `rs1` is the name of the whole replica set. `--fork` allows shell commands to return, so he doesn't have to run 3 separate shells.
+In the aobve, `rs1` is the name of the replica set. We declare that to make sure each node is part of the same replica set. `--fork` allows shell commands to return, so he doesn't have to run 3 separate shells.
 
-Ednded at ~ 6 minutes
+So the above will launch three servers. But they don't yet know about each other - they can't act in concert yet. To tie them together we have to issue a Mongo Shell command. The following script sets up a configuration and, initiates that configuration and reports on its status:
+
+```
+// init_replica.js
+
+config = {
+    _id: "m101",
+    members: [
+        { _id : 0, host : "localhost:27017", priority: 0, slaveDelay: 5 },
+        { _id : 1, host : "localhost:27018"},
+        { _id : 2, host : "localhost:27019"}
+    ]
+};
+
+rs.initiate(config); // initiates the replica set
+rs.status(); // to see what's going on
+```
+
+Have to name it the same as the `replSet` we gave to the `mongod` nodes (`rs1`). And in the above, the 1st node has a delay of 5 seconds. And in order to do that, we can't allow it to become a primary node (so, `priority: 0`).
+
+To connect to our replica set, we'll have to use a non-default port number because 27017 is associated with our delayed node, and our delayed node can never become a primary. To actually create it, we :
+
+```
+mongo --port 27018 < init_replica.js
+```
+
+Then we can connect to it:
+
+```
+mongo --port 27018
+```
+
+The mongo shell prompt is now different. For example:
+
+```
+rs1:PRIMARY>
+```
+
+`rs.status()` gives us information about our replica set.
+
+On the primary you can now do all the things you're used to (inserts, finds, etc). But you can't query secondaries by default. You have to enable that **on each secondary** with:
+
+```
+rs.slaveOk()
+```
 
 #### Replica Set Internals
 
+Consider a 3-node replica set. Each node has an **oplog** that is kept in sync with each other's.
+
+Writes go to primaries and are written to the primary's oplog. Secondaries constantly query the primary's oplog and apply those same operations themselves.
 
 
 #### Failover and Rollback
