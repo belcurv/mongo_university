@@ -65,11 +65,31 @@ Different types of nodes in a replica set:
 
 #### Write Consistency
 
+Again, in a replica set there's only a single primary and all writes go to that primary. Reads can go to the secondaries if you like. If your allow the writes to go to the primary, you get **strong consistency** of reads with respect to writes: you won't read stale data.
 
+On the other hand, if you allow your reads to go to your secondaries, you may read stale data from the secondaries because of asynchronous update lag between any two nodes.
+
+Driver read preferences can be set to to decided whether you're willing to accept reads from the secondaries.
+
+When failover occurs, there's a brief time (usually under 3 seconds) when there's no primary and you can't complete a write.
+
+Other database systems have a weaker form of consistency: eventual consistency. Eventually you'll be able to read what you wrote, but there's no guarantee that you'll be able to read it in any particular timeframe. This is hard to reason about.
+
+MongoDB does not offer eventual consistency in its default configuration. But enabling reads from secondaries is sort of a form of eventual consistency.
 
 #### Creating a Replica Set
 
+Normally you would install a separate `mongod` on each of a bunch of separate physical servers and using the default port number. For this lecture, he is creating a replica set on a single machine so he needs to set different port numbers for each of the three nodes.
 
+```
+mongod --replSet rs1 --logpath "1.log" --dbpath /data/rs1 --port 27017 --fork
+mongod --replSet rs1 --logpath "2.log" --dbpath /data/rs2 --port 27018 --fork
+mongod --replSet rs1 --logpath "3.log" --dbpath /data/rs3 --port 27019 --fork
+```
+
+In the aobve, `rs1` is the name of the whole replica set. `--fork` allows shell commands to return, so he doesn't have to run 3 separate shells.
+
+Ednded at ~ 6 minutes
 
 #### Replica Set Internals
 
