@@ -266,7 +266,7 @@ function ItemDAO(database) {
       };
 
       collection
-        .findOneAndUpdate(target, update)
+        .findOneAndUpdate(target, update, options)
         .then( item => callback(item) )
         .catch(errorHandler);
 
