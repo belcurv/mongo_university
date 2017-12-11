@@ -65,97 +65,31 @@ function CartDAO(database) {
   *
   *  As context for this method to better understand its purpose, look at
   *  how cart.itemInCart is used in the mongomart.js app.
-
-  {
-	"_id" : ObjectId("56cb1cfb72d245023179fda4"),
-	"userId" : "558098a65133816958968d88",
-	"items" : [
-		{
-			"_id" : 2,
-			"title" : "Coffee Mug",
-			"slogan" : "Keep your coffee hot!",
-			"description" : "A mug is a type of cup used for drinking hot beverages, such as coffee, tea, hot chocolate or soup. Mugs usually have handles, and hold a larger amount of fluid than other types of cup. Usually a mug holds approximately 12 US fluid ounces (350 ml) of liquid; double a tea cup. A mug is a less formal style of drink container and is not usually used in formal place settings, where a teacup or coffee cup is preferred.",
-			"stars" : 0,
-			"category" : "Kitchen",
-			"img_url" : "/img/products/mug.jpg",
-			"price" : 12.5,
-			"reviews" : [
-				{
-					"name" : "",
-					"comment" : "",
-					"stars" : 5,
-					"date" : 1456067725049
-				}
-			],
-			"quantity" : 12
-		},
-		{
-			"_id" : 1,
-			"title" : "Gray Hooded Sweatshirt",
-			"slogan" : "The top hooded sweatshirt we offer",
-			"description" : "Unless you live in a nudist colony, there are moments when the chill you feel demands that you put on something warm, and for those times, there's nothing better than this sharp MongoDB hoodie. Made of 100% cotton, this machine washable, mid-weight hoodie is all you need to stay comfortable when the temperature drops. And, since being able to keep your vital stuff with you is important, the hoodie features two roomy kangaroo pockets to ensure nothing you need ever gets lost.",
-			"stars" : 0,
-			"category" : "Apparel",
-			"img_url" : "/img/products/hoodie.jpg",
-			"price" : 29.99,
-			"quantity" : 3
-		},
-		{
-			"_id" : 16,
-			"title" : "Powered by MongoDB Sticker",
-			"slogan" : "Add to your sticker collection",
-			"description" : "Waterproof vinyl, will last 18 months outdoors.  Ideal for smooth flat surfaces like laptops, journals, windows etc.  Easy to remove.  50% discounts on all orders of any 6+",
-			"stars" : 0,
-			"category" : "Stickers",
-			"img_url" : "/img/products/sticker.jpg",
-			"price" : 1,
-			"quantity" : 25
-		},
-		{
-			"_id" : 22,
-			"title" : "Water Bottle",
-			"slogan" : "Glass water bottle",
-			"description" : "High quality glass bottle provides a healthier way to drink.  Silicone sleeve provides a good grip, a see-through window, and protects the glass vessel.  Eliminates toxic leaching that plastic can cause.  Innovative design holds 22-1/2 ounces.  Dishwasher safe",
-			"stars" : 0,
-			"category" : "Kitchen",
-			"img_url" : "/img/products/water-bottle.jpg",
-			"price" : 23,
-			"quantity" : 5
-		},
-		{
-			"_id" : 13,
-			"title" : "USB Stick (Green)",
-			"slogan" : "1GB of space",
-			"description" : "MongoDB's Turbo USB 3.0 features lightning fast transfer speeds of up to 10X faster than standard MongoDB USB 2.0 drives. This ultra-fast USB allows for fast transfer of larger files such as movies and videos.",
-			"stars" : 0,
-			"category" : "Electronics",
-			"img_url" : "/img/products/greenusb.jpg",
-			"price" : 20,
-			"reviews" : [
-				{
-					"name" : "Ringo",
-					"comment" : "He's very green.",
-					"stars" : 4,
-					"date" : 1455804902250
-				}
-			],
-			"quantity" : 1
-		}
-	]
-}
-
-
-
-
+  *
   */
   this.itemInCart = function(userId, itemId, callback) {
 
-    let q;
+    let query = {
+      userId : userId,
+      items  : { $elemMatch : { _id : itemId } }
+    };
 
+    let projection = {
+      _id       : 0,
+      'items.$' : 1
+    };
 
-      callback(null);
+    collection.findOne(query, projection)
+      .then( cart => {
 
-      // TODO-lab6 Replace all code above (in this method).
+        if (cart) {
+          callback(cart.items[0]);
+        } else {
+          callback(null);
+        }
+      })
+      .catch( err => console.log(err) );
+
   };
 
 
@@ -224,37 +158,46 @@ function CartDAO(database) {
   };
 
 
+  /** TODO-lab7
+  *
+  *  LAB #7: Update the quantity of an item in the user's cart in the
+  *  database by setting quantity to the value passed in the quantity
+  *  parameter. If the value passed for quantity is 0, remove the item
+  *  from the user's cart stored in the database.
+  *
+  *  Pass the updated user's cart to the callback.
+  *
+  *  NOTE: Use the solution for addItem as a guide to your solution for
+  *  this problem. There are several ways to solve this. By far, the
+  *  easiest is to use the $ operator. See:
+  *  https://docs.mongodb.org/manual/reference/operator/update/positional/
+  */
   this.updateQuantity = function(userId, itemId, quantity, callback) {
 
-      /*
-      * TODO-lab7
-      *
-      * LAB #7: Update the quantity of an item in the user's cart in the
-      * database by setting quantity to the value passed in the quantity
-      * parameter. If the value passed for quantity is 0, remove the item
-      * from the user's cart stored in the database.
-      *
-      * Pass the updated user's cart to the callback.
-      *
-      * NOTE: Use the solution for addItem as a guide to your solution for
-      * this problem. There are several ways to solve this. By far, the
-      * easiest is to use the $ operator. See:
-      * https://docs.mongodb.org/manual/reference/operator/update/positional/
-      *
-      */
+    let query, options, updates = {};
 
-      var userCart = {
-          userId: userId,
-          items: []
-      };
-      var dummyItem = this.createDummyItem();
-      dummyItem.quantity = quantity;
-      userCart.items.push(dummyItem);
-      callback(userCart);
+    query = {
+      userId      : userId,
+      'items._id' : itemId
+    };
 
-      // TODO-lab7 Replace all code above (in this method).
+    options = {
+      returnOriginal : false
+    };
+
+    if (quantity === 0) {
+      updates = { $pull : { items : { _id : itemId } } };
+    } else {
+      updates = { $set : { 'items.$.quantity' : quantity } };
+    }
+
+    collection
+      .findOneAndUpdate(query, updates, options)
+      .then( result => callback(result.value) )
+      .catch( err => console.log('error: ', err) );
 
   };
+
 
   this.createDummyItem = function() {
 
