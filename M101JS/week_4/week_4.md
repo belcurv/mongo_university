@@ -11,7 +11,7 @@ The single most important factor in designing your application schema within Mon
 In the relational world ... **3rd Normal Form** Ok, in a relational DB table, all non-key fields should be attributes _about the key_. For example:
 
 post_id  |  title        | body | author | author_email
-=========|===============|======|========|==================
+---------|---------------|------|--------|--------------------
 1        | 'elvis lives' | '..' | 'jim'  | 'jim@example.com'
 2        | 'node rocks'  | '..' | 'bob'  | 'bob@example.com'
 3        | 'hello world' | '..' | 'jim'  | 'jim@example.com'
