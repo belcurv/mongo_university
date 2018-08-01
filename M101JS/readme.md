@@ -38,7 +38,7 @@ Node communicates to MongoDB through the DRIVER.
 
 --------------
 
-How to install Mongo DB.
+#### How to install Mongo DB.
 
 https://www.mongodb.com/download-center#community
 
@@ -46,13 +46,24 @@ Download. Then unpack wherever. Go to the `/bin` directory. Look at that: all th
 
 **BUT FIRST**
 
-`sudo bash`
-`mkdir -p /data/db`
-`chmod 777 /data`
-`chmod 777 /data/db`
-// Copy all the extracted files to `/usr/local/bin`:
-`cp * /usr/local/bin`
-`exit`  // exit the root bash shell
+```
+sudo bash
+mkdir -p /data/db
+chmod 777 /data
+chmod 777 /data/db
+```
+
+Copy all the extracted files to `/usr/local/bin`:
+
+```
+cp * /usr/local/bin
+```
+
+Exit the root bash shell
+
+```
+exit
+```
 
 Now, you should be able to run `mongod` and `mongo` from anywhere.
 

@@ -94,7 +94,7 @@ cursor.forEach(
       /* yada yada yada ... */
 ```
 
-Projection gives us a performance advantage. It means we're only sending over the wireand using network bandwidth for data we actually need. The performance impact can be massive if there are thousands of clients making requests to our db system. Using projection, responses take less time to assemble on the server, less time to transmit to clients, and less time to process within those clients.
+Projection gives us a performance advantage. It means we're only sending over the wire and using network bandwidth for data we actually need. The performance impact can be massive if there are thousands of clients making requests to our db system. Using projection, responses take less time to assemble on the server, less time to transmit to clients, and less time to process within those clients.
 
 **Problem**
 
@@ -176,7 +176,7 @@ Documents embedded as elements in an array field. For example, `offices` in the 
 
 You can use dot.notation to identify fields within embedded documents. You can **also** use dot.notation to identify fields within documents that are embedded within arrays.
 
-For example, in a crunchbase document, `offices` is and array. We can query against it thus:
+For example, in a crunchbase document, `offices` is an array. We can query against it thus:
 
 ```
 if ('country' in options) {
@@ -237,7 +237,7 @@ https://www.npmjs.com/package/dotenv
 
 The `package.json` file for this lesson contains the dependencies for the `twitter` and `dotenv` packages. See the applications in the handouts for examples of how to use. The documentation for the `twitter` and `nodenv` packages provides details on setting up your tokens as environment variables, loading them, and using them to access the twitter API.
 
-Inserting a document with `insertOne`. It takes a document( MongoDB will readily accept JSON) and a callback. 
+Inserting a document with `insertOne`. It takes a document( MongoDB will readily accept JSON) and a callback.
 
 ```
 db.collection('statuses').insertOne(document, function(err, res) {
